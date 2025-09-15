@@ -1,6 +1,3 @@
-
-// Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
-// Licensed under the Mozilla Public License v2.0
 terraform {
   required_providers {
     oci = {
@@ -11,59 +8,50 @@ terraform {
   required_version = ">= 1.0.0"
 }
 
-
-variable "tenancy_ocid" {
-}
-
-variable "user_ocid" {
-}
-
-variable "fingerprint" {
-}
-
+# ---------------- Variables ----------------
+variable "tenancy_ocid" {}
+variable "user_ocid" {}
+variable "fingerprint" {}
 variable "private_key" {
+  description = "PEM formatted private key contents"
+  sensitive   = true
 }
-
-variable "ssh_public_key" {
-}
-
-variable "compartment_ocid" {
-}
-
-variable "region" {
-}
-
+variable "compartment_ocid" {}
+variable "region" {}
+variable "ssh_public_key" {}
 variable "dbname" {
-  default     = "hbdemo01"
+  default = "hbdemo01"
 }
 
+# ---------------- Provider ----------------
 provider "oci" {
   region           = var.region
   tenancy_ocid     = var.tenancy_ocid
   user_ocid        = var.user_ocid
   fingerprint      = var.fingerprint
   private_key      = var.private_key
+  # ✅ Alternative (safer): use private_key_path if you want to upload the key file
+  # private_key_path = var.private_key_path
 }
 
+# ---------------- Region Mapping ----------------
 variable "ad_region_mapping" {
   type = map(string)
-
   default = {
-    us-london-1 = 1
+    uk-london-1 = 1
+    ap-mumbai-1 = 1
   }
 }
 
 variable "images" {
   type = map(string)
-
   default = {
-    # See https://docs.us-phoenix-1.oraclecloud.com/images/
-    # Oracle-provided image "Oracle-Linux-7.5-2018.10.16-0"
-    uk-london-1    = "ocid1.image.oc1.uk-london-1.aaaaaaaaskspfz56rlcmtfbr2milotcxqcpitly63zipmn4joygm44qs7hua"
-    ap-mumbai-1    = "ocid1.image.oc1.ap-mumbai-1.aaaaaaaa6axdosyr74xbitjbwdwp7bmjvjfj5rkym6juttbjvi5fj3xiurna"
+    uk-london-1 = "ocid1.image.oc1.uk-london-1.aaaaaaaaskspfz56rlcmtfbr2milotcxqcpitly63zipmn4joygm44qs7hua"
+    ap-mumbai-1 = "ocid1.image.oc1.ap-mumbai-1.aaaaaaaa6axdosyr74xbitjbwdwp7bmjvjfj5rkym6juttbjvi5fj3xiurna"
   }
 }
 
+# ---------------- Networking ----------------
 data "oci_identity_availability_domain" "ad" {
   compartment_id = var.tenancy_ocid
   ad_number      = var.ad_region_mapping[var.region]
@@ -120,8 +108,8 @@ resource "oci_core_security_list" "test_security_list" {
     source   = "0.0.0.0/0"
 
     tcp_options {
-      max = "22"
-      min = "22"
+      min = 22
+      max = 22
     }
   }
 
@@ -130,8 +118,8 @@ resource "oci_core_security_list" "test_security_list" {
     source   = "0.0.0.0/0"
 
     tcp_options {
-      max = "3000"
-      min = "3000"
+      min = 3000
+      max = 3000
     }
   }
 
@@ -140,8 +128,8 @@ resource "oci_core_security_list" "test_security_list" {
     source   = "0.0.0.0/0"
 
     tcp_options {
-      max = "3005"
-      min = "3005"
+      min = 3005
+      max = 3005
     }
   }
 
@@ -150,47 +138,38 @@ resource "oci_core_security_list" "test_security_list" {
     source   = "0.0.0.0/0"
 
     tcp_options {
-      max = "80"
-      min = "80"
+      min = 80
+      max = 80
     }
   }
 }
 
-
+# ---------------- Images ----------------
 data "oci_core_images" "test_images" {
-  #Required
   compartment_id = var.compartment_ocid
-
-  #Optional
-  shape = "VM.Standard.A1.Flex"
+  shape          = "VM.Standard.A1.Flex"
 }
 
+# ---------------- Autonomous DB ----------------
 data "oci_database_autonomous_databases" "test_autonomous_databases" {
-  #Required
   compartment_id = var.compartment_ocid
-
-  #Optional
-  db_workload  = "OLTP"
-  is_free_tier = "true"
+  db_workload    = "OLTP"
+  is_free_tier   = true
 }
 
 resource "oci_database_autonomous_database" "test_autonomous_database" {
-  #Required
   admin_password           = "Testalwaysfree1"
   compartment_id           = var.compartment_ocid
-  cpu_core_count           = "1"
-  data_storage_size_in_tbs = "1"
+  cpu_core_count           = 1
+  data_storage_size_in_tbs = 1
   db_name                  = var.dbname
-
-  #Optional
-  db_workload  = "OLTP"
-  display_name = var.dbname
+  db_workload              = "OLTP"
+  display_name             = var.dbname
+  is_auto_scaling_enabled  = false
+  license_model            = "LICENSE_INCLUDED"
+  is_free_tier             = true
 
   freeform_tags = {
-    "Department" = "Finance"
+    Department = "Finance"
   }
-
-  is_auto_scaling_enabled = "false"
-  license_model           = "LICENSE_INCLUDED"
-  is_free_tier            = "true"
 }
