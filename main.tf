@@ -50,6 +50,7 @@ variable "images" {
     # See https://docs.us-phoenix-1.oraclecloud.com/images/
     # Oracle-provided image "Oracle-Linux-7.5-2018.10.16-0"
     uk-london-1    = "ocid1.image.oc1.uk-london-1.aaaaaaaaskspfz56rlcmtfbr2milotcxqcpitly63zipmn4joygm44qs7hua"
+    ap-mumbai-1    = "ocid1.image.oc1.ap-mumbai-1.aaaaaaaa6axdosyr74xbitjbwdwp7bmjvjfj5rkym6juttbjvi5fj3xiurna"
   }
 }
 
